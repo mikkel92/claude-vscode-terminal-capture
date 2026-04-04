@@ -1,0 +1,63 @@
+{
+  "name": "claude-terminal-capture",
+  "displayName": "Claude Terminal Capture",
+  "description": "Captures VS Code terminal output so Claude Code can read it",
+  "version": "0.0.1",
+  "publisher": "proprty-ai",
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claudeTerminal.startCapture",
+        "title": "Claude Terminal: Start Capture"
+      },
+      {
+        "command": "claudeTerminal.stopCapture",
+        "title": "Claude Terminal: Stop Capture"
+      },
+      {
+        "command": "claudeTerminal.clearLog",
+        "title": "Claude Terminal: Clear Log"
+      }
+    ],
+    "configuration": {
+      "title": "Claude Terminal Capture",
+      "properties": {
+        "claudeTerminal.outputPath": {
+          "type": "string",
+          "default": ".vscode/terminal-output.log",
+          "description": "Path for terminal output log (relative to workspace)"
+        },
+        "claudeTerminal.maxFileSizeKB": {
+          "type": "number",
+          "default": 512,
+          "description": "Max log file size in KB before truncation"
+        },
+        "claudeTerminal.captureOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Start capturing terminal output automatically"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.93.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  }
+}
