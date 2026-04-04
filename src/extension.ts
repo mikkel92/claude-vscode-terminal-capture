@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { TerminalCaptureManager } from './terminalCapture';
+import { ensureMcpRegistered, removeMcpRegistration } from './mcpRegistration';
 
 let captureManager: TerminalCaptureManager | undefined;
 let statusBarItem: vscode.StatusBarItem | undefined;
@@ -34,6 +35,9 @@ export function activate(context: vscode.ExtensionContext) {
     captureManager.start();
     updateStatusBar(true);
   }
+
+  // Register MCP server with Claude Code (async, non-blocking)
+  ensureMcpRegistered(context.extensionPath);
 }
 
 function updateStatusBar(capturing: boolean) {
