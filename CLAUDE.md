@@ -11,3 +11,9 @@ This project is a VS Code extension + MCP server that captures terminal output s
 ## Auto-Debug Workflow
 
 When a user says a script crashed or isn't working, use `get_terminal_errors` to see the error output, then read the relevant source files and fix the issue.
+
+When asked to run a script:
+1. Run it with Bash
+2. If it fails, immediately read the error, open the source file, and fix the bug
+3. Re-run to confirm the fix works
+4. Repeat until the script runs successfully
