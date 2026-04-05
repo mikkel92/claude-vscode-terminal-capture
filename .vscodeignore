@@ -1,0 +1,10 @@
+src/**
+.vscode/**
+.claude/**
+.gitignore
+tsconfig.json
+tsconfig.mcp.json
+test_script.py
+CLAUDE.md
+**/*.ts
+**/*.map
