@@ -3,6 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import * as fs from 'fs';
 import * as path from 'path';
+import { execFile } from 'child_process';
 import { stripAnsi } from './ansiStrip';
 
 function resolveLogPath(): string {
@@ -152,6 +153,38 @@ async function main() {
         .map((b) => `[${b.timestamp}] Terminal: "${b.terminal}"\n$ ${b.command}\n${b.output}`)
         .join('\n\n---\n\n');
       return { content: [{ type: 'text' as const, text }] };
+    }
+  );
+
+  server.tool(
+    'run_script',
+    'Run a script and return its output. Use this to execute Python or other scripts and see their output, including errors. If the script fails, read the source file and fix the bug, then run again.',
+    {
+      command: z.string().describe('The command to run (e.g. "python test_script.py", "node app.js")'),
+      cwd: z.string().optional().describe('Working directory (defaults to current workspace)'),
+    },
+    async ({ command, cwd: workDir }) => {
+      const runDir = workDir || process.cwd();
+      return new Promise((resolve) => {
+        const [cmd, ...args] = command.split(/\s+/);
+        execFile(cmd, args, {
+          cwd: runDir,
+          timeout: 60000,
+          maxBuffer: 512 * 1024,
+          shell: true,
+        }, (error, stdout, stderr) => {
+          const output = [
+            stdout ? `stdout:\n${stdout}` : '',
+            stderr ? `stderr:\n${stderr}` : '',
+            error ? `exit code: ${error.code || 1}` : 'exit code: 0',
+          ].filter(Boolean).join('\n\n');
+
+          resolve({
+            content: [{ type: 'text' as const, text: output || 'No output.' }],
+            isError: !!error,
+          });
+        });
+      });
     }
   );
 

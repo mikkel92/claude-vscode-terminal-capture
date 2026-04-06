@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { TerminalCaptureManager } from './terminalCapture';
-import { ensureMcpRegistered, removeMcpRegistration } from './mcpRegistration';
+import { ensureMcpRegistered } from './mcpRegistration';
 
 let captureManager: TerminalCaptureManager | undefined;
 let statusBarItem: vscode.StatusBarItem | undefined;
