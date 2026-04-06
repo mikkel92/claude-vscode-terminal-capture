@@ -18,3 +18,10 @@ When asked to run a script:
 2. If it fails, immediately read the error, open the source file, and fix the bug
 3. Re-run to confirm the fix works
 4. Repeat until the script runs successfully
+
+## Databricks Connect
+
+For Python scripts that use PySpark / Databricks Connect, use the ml_model venv:
+- venv path: `../ml_model/.venv`
+- This environment has pyspark, databricks-connect, and related packages installed
+- Databricks auth is configured in `~/.databrickscfg` (DEFAULT profile)

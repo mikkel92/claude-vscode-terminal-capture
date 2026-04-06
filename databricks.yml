@@ -1,0 +1,22 @@
+bundle:
+  name: claude_vscode_terminal_access
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-6295225964585311.11.azuredatabricks.net
+      root_path: /Workspace/Repos/mj@proprty.ai
+    sync:
+      exclude:
+        - ".git"
+        - ".vscode"
+        - "__pycache__"
+        - "*.pyc"
+        - ".venv"
+        - "venv"
+        - ".env"
+        - "node_modules"
+        - "out"
+        - "out-mcp"

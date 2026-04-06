@@ -1,10 +1,7 @@
-import pandas as pd
+from pyspark.sql import SparkSession
 
-df = pd.DataFrame([
-    {"name": "Alice", "age": 30},
-    {"name": "Bob", "age": 25},
-])
+spark = SparkSession.builder.getOrCreate()
 
-# Bug: "agee" is a typo, should be "age"
-result = df[df.agee > 20][["name", "salary"]]
-print(result)
+# Bug: table name typo — "gold" should be the correct schema
+df = spark.sql("SELECT * FROM denmark.goldd.buildings LIMIT 5")
+df.show()

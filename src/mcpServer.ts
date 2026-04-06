@@ -158,20 +158,24 @@ async function main() {
 
   server.tool(
     'run_script',
-    'Run a script and return its output. Use this to execute Python or other scripts and see their output, including errors. If the script fails, read the source file and fix the bug, then run again.',
+    'Run a script and return its output. Use this to execute Python or other scripts and see their output, including errors. If the script fails, read the source file and fix the bug, then run again. For Databricks Connect scripts, use the venv parameter to activate the ml_model environment.',
     {
       command: z.string().describe('The command to run (e.g. "python test_script.py", "node app.js")'),
       cwd: z.string().optional().describe('Working directory (defaults to current workspace)'),
+      venv: z.string().optional().describe('Path to a Python venv to activate before running (e.g. "/path/to/ml_model/.venv")'),
     },
-    async ({ command, cwd: workDir }) => {
+    async ({ command, cwd: workDir, venv }) => {
       const runDir = workDir || process.cwd();
+      // If a venv is specified, source it before running the command
+      const fullCommand = venv
+        ? `source "${venv}/bin/activate" && ${command}`
+        : command;
       return new Promise((resolve) => {
-        const [cmd, ...args] = command.split(/\s+/);
-        execFile(cmd, args, {
+        execFile('bash', ['-c', fullCommand], {
           cwd: runDir,
-          timeout: 60000,
-          maxBuffer: 512 * 1024,
-          shell: true,
+          timeout: 120000,
+          maxBuffer: 1024 * 1024,
+          env: { ...process.env },
         }, (error, stdout, stderr) => {
           const output = [
             stdout ? `stdout:\n${stdout}` : '',
