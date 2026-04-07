@@ -1,8 +1,21 @@
 out/
 out-mcp/
 node_modules/
+*.vsix
+
+# Local config (contains user-specific paths)
+.claude/config.local.json
+.claude/settings.local.json
+
+# VS Code local settings
+.vscode/settings.json
+
+# Databricks local config
+databricks.yml
+.databricks/
+
+# Runtime files
 .vscode/terminal-output.log
 .vscode/mcp-command-request.json
 .vscode/mcp-command-response.json
 .vscode/.terminal-error-offset
-*.vsix
