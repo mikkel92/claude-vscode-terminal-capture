@@ -3,39 +3,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { stripAnsi } from './ansiStrip';
 
-const ERROR_PATTERNS = [
-  /error/i,
-  /exception/i,
-  /traceback/i,
-  /failed/i,
-  /fatal/i,
-  /panic/i,
-  /segfault/i,
-  /ENOENT/,
-  /EACCES/,
-  /ECONNREFUSED/,
-  /SyntaxError/,
-  /TypeError/,
-  /ReferenceError/,
-  /ModuleNotFoundError/,
-  /ImportError/,
-  /exit code [1-9]/i,
-  /command not found/,
-];
-
 export class TerminalCaptureManager {
   private disposables: vscode.Disposable[] = [];
   private outputPath: string;
   private maxFileSizeBytes: number;
-  private lastErrorTime = 0;
-  private static ERROR_COOLDOWN_MS = 15000;
-  private outputChannel: vscode.OutputChannel;
 
   constructor(config: vscode.WorkspaceConfiguration) {
     const relativePath = config.get<string>('outputPath', '.vscode/terminal-output.log');
     const maxKB = config.get<number>('maxFileSizeKB', 512);
     this.maxFileSizeBytes = maxKB * 1024;
-    this.outputChannel = vscode.window.createOutputChannel('Claude Terminal Capture');
 
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (workspaceFolder) {
@@ -108,48 +84,6 @@ export class TerminalCaptureManager {
       this.truncateIfNeeded();
     } catch (err) {
       console.error('Claude Terminal Capture: failed to write log', err);
-    }
-
-    // Check for errors and auto-fix
-    if (this.hasError(cleaned)) {
-      this.autoFix(commandLine, cleaned);
-    }
-  }
-
-  private hasError(output: string): boolean {
-    return ERROR_PATTERNS.some((p) => p.test(output));
-  }
-
-  private async autoFix(commandLine: string, errorOutput: string): Promise<void> {
-    const now = Date.now();
-    if (now - this.lastErrorTime < TerminalCaptureManager.ERROR_COOLDOWN_MS) {
-      return;
-    }
-    this.lastErrorTime = now;
-
-    const truncated = errorOutput.length > 3000
-      ? errorOutput.slice(-3000)
-      : errorOutput;
-
-    const prompt =
-      `The command \`${commandLine}\` failed with this error:\n\n` +
-      `${truncated}\n\n` +
-      `Read the relevant source file(s) and fix the bug. ` +
-      `Only fix the bug — do not add comments, docstrings, or make other changes.`;
-
-    this.outputChannel.appendLine(`\n[${new Date().toISOString()}] Error detected in: ${commandLine}`);
-    this.outputChannel.appendLine('  Opening Claude Code with fix prompt...');
-
-    // Open Claude Code editor panel with the prompt pre-filled
-    try {
-      await vscode.commands.executeCommand(
-        'claude-vscode.editor.open',
-        undefined,  // no session ID — new session
-        prompt       // pre-filled prompt
-      );
-      this.outputChannel.appendLine('  Claude Code opened. Waiting for user to press Enter.');
-    } catch (err) {
-      this.outputChannel.appendLine(`  Failed to open Claude Code: ${err}`);
     }
   }
 

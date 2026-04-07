@@ -21,13 +21,7 @@ When asked to run a script:
 
 ## Databricks Connect
 
-For Python scripts that use PySpark / Databricks Connect, use the ml_model venv:
-- venv path: `/Users/mikkeljensen/Desktop/code/proprty.ai/claude_code/git_folders/ml_model/.venv`
-- Cluster ID: `0524-081231-nrsspgl4`
-- This environment has pyspark, databricks-connect, and related packages installed
-- Databricks auth is configured in `~/.databrickscfg` (DEFAULT profile)
+For Python scripts that use PySpark / Databricks Connect, use the `/run-databricks` skill.
+This activates the correct venv and runs on serverless compute.
 
-When running scripts with `run_script`, pass the venv parameter:
-```
-venv: "/Users/mikkeljensen/Desktop/code/proprty.ai/claude_code/git_folders/ml_model/.venv"
-```
+**IMPORTANT**: Do NOT change `SparkSession.builder.getOrCreate()` to `DatabricksSession`. The existing `SparkSession` import works correctly with Databricks Connect when the venv is activated. Never modify the Spark session setup unless the user explicitly asks.

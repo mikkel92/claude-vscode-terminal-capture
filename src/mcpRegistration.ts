@@ -66,11 +66,3 @@ export async function ensureMcpRegistered(extensionPath: string): Promise<void> 
   }
 }
 
-export async function removeMcpRegistration(): Promise<void> {
-  const cli = findClaudeCli();
-  try {
-    await exec(cli, ['mcp', 'remove', MCP_NAME]);
-  } catch {
-    // best effort — CLI might not be available
-  }
-}

@@ -1,10 +1,12 @@
 src/**
+out-mcp/**
 .vscode/**
 .claude/**
 .gitignore
 tsconfig.json
 tsconfig.mcp.json
 test_script.py
+databricks.yml
 CLAUDE.md
 **/*.ts
 **/*.map

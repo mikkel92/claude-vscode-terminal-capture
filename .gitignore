@@ -2,4 +2,7 @@ out/
 out-mcp/
 node_modules/
 .vscode/terminal-output.log
+.vscode/mcp-command-request.json
+.vscode/mcp-command-response.json
+.vscode/.terminal-error-offset
 *.vsix
