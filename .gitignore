@@ -3,8 +3,7 @@ out-mcp/
 node_modules/
 *.vsix
 
-# Local config (contains user-specific paths)
-.claude/config.local.json
+# Local config
 .claude/settings.local.json
 
 # VS Code local settings

@@ -1,4 +1,0 @@
-{
-  "venvPath": "/path/to/your/databricks-connect/.venv",
-  "bootstrapScript": "/path/to/.vscode/extensions/databricks.databricks-<version>/resources/python/dbconnect-bootstrap.py"
-}

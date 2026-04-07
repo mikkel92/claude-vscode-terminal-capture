@@ -17,49 +17,42 @@ npm run compile
 ## 2. Install the VS Code extension
 
 ```bash
-# Package the extension
 npx vsce package
-
-# Install it (adjust the path to your VS Code CLI)
 code --install-extension claude-terminal-capture-0.0.1.vsix
 ```
 
 Reload VS Code after installing.
 
-## 3. Configure local paths
-
-Copy the example config:
-
-```bash
-cp .claude/config.local.json.example .claude/config.local.json
-```
-
-Edit `.claude/config.local.json` with your paths:
-
-```json
-{
-  "venvPath": "/path/to/your/databricks-connect/.venv",
-  "bootstrapScript": "/path/to/.vscode/extensions/databricks.databricks-<version>/resources/python/dbconnect-bootstrap.py"
-}
-```
-
-**Finding the bootstrap script path:**
-```bash
-ls ~/.vscode/extensions/databricks.databricks-*/resources/python/dbconnect-bootstrap.py
-```
-
-**Finding your venv path:**  
-Use the venv where you installed `databricks-connect`. This is typically the Python environment selected in your Databricks-connected VS Code workspace.
-
-## 4. Register the MCP server with Claude Code
+## 3. Register the MCP server with Claude Code
 
 ```bash
 claude mcp add --transport stdio claude-terminal-capture -- node $(pwd)/out-mcp/mcpServer.js
 ```
 
+## 4. Install the `/run-databricks` skill
+
+Copy the skill to your global Claude Code skills directory:
+
+```bash
+mkdir -p ~/.claude/skills/run-databricks
+cp .claude/skills/run-databricks/SKILL.md ~/.claude/skills/run-databricks/SKILL.md
+```
+
+Then edit `~/.claude/skills/run-databricks/SKILL.md` and replace the two placeholder paths:
+
+- **VENV_PATH**: Your Databricks Connect venv (e.g. `/path/to/project/.venv`)
+- **BOOTSTRAP_SCRIPT**: The Databricks extension's bootstrap script
+
+Find the bootstrap script path:
+```bash
+ls ~/.vscode/extensions/databricks.databricks-*/resources/python/dbconnect-bootstrap.py
+```
+
+Find your venv path — this is the Python environment where you installed `databricks-connect`, typically the interpreter selected in your Databricks-connected VS Code workspace.
+
 ## 5. Verify
 
-Start a new Claude Code session in this project and type:
+Start a new Claude Code session in any project and type:
 
 ```
 /run-databricks test_script.py
