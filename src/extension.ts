@@ -45,8 +45,12 @@ function startCommandWatcher(context: vscode.ExtensionContext) {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   if (!workspaceFolder) { return; }
 
-  const requestFile = path.join(workspaceFolder, '.vscode', 'mcp-command-request.json');
-  const responseFile = path.join(workspaceFolder, '.vscode', 'mcp-command-response.json');
+  // Use a fixed shared location for IPC so MCP server and extension always agree
+  const ipcDir = path.join(process.env.HOME || '/tmp', '.claude-terminal-capture');
+  if (!fs.existsSync(ipcDir)) { fs.mkdirSync(ipcDir, { recursive: true }); }
+
+  const requestFile = path.join(ipcDir, 'mcp-command-request.json');
+  const responseFile = path.join(ipcDir, 'mcp-command-response.json');
   const logFile = path.join(workspaceFolder, '.vscode', 'terminal-output.log');
 
   let processing = false;
@@ -113,6 +117,45 @@ function startCommandWatcher(context: vscode.ExtensionContext) {
             processing = false;
           }
         }, 110000);
+
+      } else if (request.command === 'databricks_connect_run') {
+        // Open the file so it's the active editor, then trigger the Databricks extension
+        const filePath = request.filePath;
+        const doc = await vscode.workspace.openTextDocument(filePath);
+        await vscode.window.showTextDocument(doc);
+
+        // Listen for terminal execution to complete (Databricks extension opens a terminal)
+        const disposable = vscode.window.onDidEndTerminalShellExecution((e) => {
+          disposable.dispose();
+
+          const logContent = fs.existsSync(logFile)
+            ? fs.readFileSync(logFile, 'utf-8')
+            : '';
+          const blocks = logContent.split(/\n=== Terminal:/);
+          const lastBlock = blocks.length > 1 ? '=== Terminal:' + blocks[blocks.length - 1] : '';
+
+          fs.writeFileSync(responseFile, JSON.stringify({
+            output: lastBlock || 'Command completed. Check the terminal for output.',
+            exitCode: e.exitCode ?? 0,
+          }));
+          processing = false;
+        });
+
+        await vscode.commands.executeCommand('databricks.run.dbconnect.run');
+
+        // Ensure the terminal panel is visible
+        await vscode.commands.executeCommand('workbench.action.terminal.focus');
+
+        setTimeout(() => {
+          if (processing) {
+            disposable.dispose();
+            fs.writeFileSync(responseFile, JSON.stringify({
+              output: 'Databricks Connect run timed out. Check the VS Code terminal.',
+              exitCode: -1,
+            }));
+            processing = false;
+          }
+        }, 300000); // 5 min timeout for Databricks runs
       }
     } catch (err) {
       fs.writeFileSync(responseFile, JSON.stringify({

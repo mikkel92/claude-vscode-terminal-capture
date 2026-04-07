@@ -5,6 +5,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 
+function getIpcDir(): string {
+  const dir = path.join(process.env.HOME || '/tmp', '.claude-terminal-capture');
+  if (!fs.existsSync(dir)) { fs.mkdirSync(dir, { recursive: true }); }
+  return dir;
+}
+
 function resolveLogPath(): string {
   if (process.env.TERMINAL_LOG_PATH) {
     return process.env.TERMINAL_LOG_PATH;
@@ -145,13 +151,9 @@ async function main() {
     },
     async ({ command, cwd: workDir, venv, env: extraEnv }) => {
       const runDir = workDir || process.cwd();
-      const requestFile = path.join(runDir, '.vscode', 'mcp-command-request.json');
-      const responseFile = path.join(runDir, '.vscode', 'mcp-command-response.json');
-
-      const vscodeDir = path.join(runDir, '.vscode');
-      if (!fs.existsSync(vscodeDir)) {
-        fs.mkdirSync(vscodeDir, { recursive: true });
-      }
+      const ipcDir = getIpcDir();
+      const requestFile = path.join(ipcDir, 'mcp-command-request.json');
+      const responseFile = path.join(ipcDir, 'mcp-command-response.json');
 
       if (fs.existsSync(responseFile)) { fs.unlinkSync(responseFile); }
 
@@ -178,6 +180,45 @@ async function main() {
 
       return {
         content: [{ type: 'text' as const, text: 'Timeout waiting for script to finish (120s). Check the VS Code terminal for output.' }],
+        isError: true,
+      };
+    }
+  );
+
+  server.tool(
+    'run_with_databricks_connect',
+    'Run a Python file using the VS Code Databricks extension\'s "Run current file with Databricks Connect" button. This handles all auth, env setup, and workspace path resolution correctly. Use this instead of run_script for Databricks Connect scripts.',
+    {
+      filePath: z.string().describe('Absolute path to the Python file to run'),
+    },
+    async ({ filePath }) => {
+      const ipcDir = getIpcDir();
+      const requestFile = path.join(ipcDir, 'mcp-command-request.json');
+      const responseFile = path.join(ipcDir, 'mcp-command-response.json');
+
+      if (fs.existsSync(responseFile)) { fs.unlinkSync(responseFile); }
+
+      fs.writeFileSync(requestFile, JSON.stringify({
+        command: 'databricks_connect_run',
+        filePath,
+      }));
+
+      // Wait up to 5 minutes for Databricks runs
+      for (let i = 0; i < 600; i++) {
+        await new Promise(r => setTimeout(r, 500));
+        if (fs.existsSync(responseFile)) {
+          const raw = fs.readFileSync(responseFile, 'utf-8');
+          fs.unlinkSync(responseFile);
+          const response = JSON.parse(raw);
+          return {
+            content: [{ type: 'text' as const, text: response.output || 'No output.' }],
+            isError: response.exitCode !== 0,
+          };
+        }
+      }
+
+      return {
+        content: [{ type: 'text' as const, text: 'Timeout waiting for Databricks Connect run (5min). Check the VS Code terminal.' }],
         isError: true,
       };
     }
