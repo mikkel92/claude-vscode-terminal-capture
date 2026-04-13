@@ -86,6 +86,7 @@ function startCommandWatcher(context: vscode.ExtensionContext) {
           });
         }
         terminal.show();
+        await vscode.commands.executeCommand('workbench.action.terminal.focus');
 
         const disposable = vscode.window.onDidEndTerminalShellExecution((e) => {
           if (e.terminal === terminal) {
