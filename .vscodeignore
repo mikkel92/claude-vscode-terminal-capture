@@ -1,12 +1,15 @@
 src/**
-out-mcp/**
 .vscode/**
 .claude/**
+.venv/**
+.databricks/**
+*.vsix
 .gitignore
 tsconfig.json
 tsconfig.mcp.json
 test_script.py
 databricks.yml
 CLAUDE.md
+package-lock.json
 **/*.ts
 **/*.map

@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -9,6 +10,13 @@ function getIpcDir(): string {
   const dir = path.join(process.env.HOME || '/tmp', '.claude-terminal-capture');
   if (!fs.existsSync(dir)) { fs.mkdirSync(dir, { recursive: true }); }
   return dir;
+}
+
+// Route IPC per-workspace so multiple VS Code windows don't race for the same
+// request file. The MCP server inherits cwd from the Claude session, which was
+// launched inside the target window's terminal.
+function getWorkspaceKey(): string {
+  return crypto.createHash('sha256').update(process.cwd()).digest('hex').slice(0, 16);
 }
 
 function resolveLogPath(): string {
@@ -152,8 +160,9 @@ async function main() {
     async ({ command, cwd: workDir, venv, env: extraEnv }) => {
       const runDir = workDir || process.cwd();
       const ipcDir = getIpcDir();
-      const requestFile = path.join(ipcDir, 'mcp-command-request.json');
-      const responseFile = path.join(ipcDir, 'mcp-command-response.json');
+      const key = getWorkspaceKey();
+      const requestFile = path.join(ipcDir, `mcp-command-request-${key}.json`);
+      const responseFile = path.join(ipcDir, `mcp-command-response-${key}.json`);
 
       if (fs.existsSync(responseFile)) { fs.unlinkSync(responseFile); }
 
@@ -193,8 +202,9 @@ async function main() {
     },
     async ({ filePath }) => {
       const ipcDir = getIpcDir();
-      const requestFile = path.join(ipcDir, 'mcp-command-request.json');
-      const responseFile = path.join(ipcDir, 'mcp-command-response.json');
+      const key = getWorkspaceKey();
+      const requestFile = path.join(ipcDir, `mcp-command-request-${key}.json`);
+      const responseFile = path.join(ipcDir, `mcp-command-response-${key}.json`);
 
       if (fs.existsSync(responseFile)) { fs.unlinkSync(responseFile); }
 

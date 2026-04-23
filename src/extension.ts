@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { TerminalCaptureManager } from './terminalCapture';
@@ -49,8 +50,11 @@ function startCommandWatcher(context: vscode.ExtensionContext) {
   const ipcDir = path.join(process.env.HOME || '/tmp', '.claude-terminal-capture');
   if (!fs.existsSync(ipcDir)) { fs.mkdirSync(ipcDir, { recursive: true }); }
 
-  const requestFile = path.join(ipcDir, 'mcp-command-request.json');
-  const responseFile = path.join(ipcDir, 'mcp-command-response.json');
+  // Route IPC per-workspace: each VS Code window only watches its own request
+  // file, so multiple windows don't race for the same job.
+  const key = crypto.createHash('sha256').update(workspaceFolder).digest('hex').slice(0, 16);
+  const requestFile = path.join(ipcDir, `mcp-command-request-${key}.json`);
+  const responseFile = path.join(ipcDir, `mcp-command-response-${key}.json`);
   const logFile = path.join(workspaceFolder, '.vscode', 'terminal-output.log');
 
   let processing = false;
